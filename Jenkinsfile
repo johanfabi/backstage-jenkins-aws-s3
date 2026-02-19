@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     environment {
-        AWS_CREDENTIALS = credentials('backstage-jenkins-iac-aws')
         TF_STATE_BUCKET = 'backstage-jenkins-iac'
         TF_STATE_REGION = 'us-east-1'
     }
@@ -38,12 +37,8 @@ pipeline {
 
         stage('Terraform Plan') {
             steps {
-                withCredentials([[
-                    $class: 'AmazonWebServicesCredentialsBinding',
-                    credentialsId: 'backstage-jenkins-iac-aws',
-                    accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                ]]) {
+                // Using usernamePassword binding as it's very common and works with AWS keys
+                withCredentials([usernamePassword(credentialsId: 'backstage-jenkins-iac-aws', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
                     sh '''
                         terraform plan \
                         -var="bucket_name=${BUCKET_NAME}" \
@@ -56,12 +51,7 @@ pipeline {
 
         stage('Terraform Apply/Destroy') {
             steps {
-                withCredentials([[
-                    $class: 'AmazonWebServicesCredentialsBinding',
-                    credentialsId: 'backstage-jenkins-iac-aws',
-                    accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                ]]) {
+                withCredentials([usernamePassword(credentialsId: 'backstage-jenkins-iac-aws', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
                     script {
                         if (params.ACTION == 'destroy') {
                             sh 'terraform destroy -auto-approve -var="bucket_name=${BUCKET_NAME}" -var="region=${REGION}"'
