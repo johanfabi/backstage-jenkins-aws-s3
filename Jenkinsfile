@@ -28,7 +28,7 @@ pipeline {
                 }
                 withCredentials([usernamePassword(credentialsId: 'backstage-jenkins-iac-aws', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
                     sh '''
-                        terraform init \
+                        terraform init -reconfigure \
                         -backend-config="bucket=${TF_STATE_BUCKET}" \
                         -backend-config="key=s3/${BUCKET_NAME}.tfstate" \
                         -backend-config="region=${TF_STATE_REGION}"
