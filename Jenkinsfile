@@ -26,18 +26,19 @@ pipeline {
                         error "BUCKET_NAME parameter is required"
                     }
                 }
-                sh '''
-                    terraform init \
-                    -backend-config="bucket=${TF_STATE_BUCKET}" \
-                    -backend-config="key=s3/${BUCKET_NAME}.tfstate" \
-                    -backend-config="region=${TF_STATE_REGION}"
-                '''
+                withCredentials([usernamePassword(credentialsId: 'backstage-jenkins-iac-aws', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
+                    sh '''
+                        terraform init \
+                        -backend-config="bucket=${TF_STATE_BUCKET}" \
+                        -backend-config="key=s3/${BUCKET_NAME}.tfstate" \
+                        -backend-config="region=${TF_STATE_REGION}"
+                    '''
+                }
             }
         }
 
         stage('Terraform Plan') {
             steps {
-                // Using usernamePassword binding as it's very common and works with AWS keys
                 withCredentials([usernamePassword(credentialsId: 'backstage-jenkins-iac-aws', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
                     sh '''
                         terraform plan \
